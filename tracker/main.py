@@ -180,8 +180,9 @@ def _maybe_open_health_issue(github, tracker: dict, health: dict, alert_cfg: dic
         f"Monitor failing: {tracker['name']} ({tracker['id']})",
         f"The last {health['failures']} runs could not read Tesla inventory.\n\n"
         f"Latest error: `{health.get('last_error')}`\n\n"
-        "Common causes: Tesla's bot protection blocking GitHub's runners, or a change in the inventory "
-        "API. This issue closes itself when a run succeeds.",
+        "Common causes: Tesla blocking the runner's network (GitHub-hosted runners get HTTP 403), or a "
+        "change in the inventory API. See the README section \"Running where Tesla allows it\", and the "
+        "*Diagnose Tesla access* workflow. This issue closes itself when a run succeeds.",
         notify.HEALTH_LABEL,
     )
 

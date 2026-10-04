@@ -26,7 +26,9 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Tesla blocks GitHub-hosted runners (HTTP 403). Set the repository variable
+    # MONITOR_RUNNER to "self-hosted" to run this job on your own machine instead.
+    runs-on: ${{ vars.MONITOR_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +43,7 @@ jobs:
       - name: Check Tesla inventory and incentives
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TESLA_PROXY: ${{ secrets.TESLA_PROXY }}
         run: python -m tracker run ${{ inputs.dry_run && '--dry-run' || '' }}
 
       - name: Commit updated history

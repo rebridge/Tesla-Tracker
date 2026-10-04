@@ -7,6 +7,7 @@ see which (if any) gets past Tesla's bot protection from a given network.
 from __future__ import annotations
 
 import json
+import os
 import tomllib
 from pathlib import Path
 
@@ -29,12 +30,14 @@ def main() -> None:
         "design_page": "https://www.tesla.com/modely/design",
         "home": "https://www.tesla.com/",
     }
+    proxy = os.environ.get("TESLA_PROXY") or None
+    print(f"proxy: {'TESLA_PROXY set' if proxy else 'none'}")
     for imp in ("chrome", "chrome131", "safari17_0", "firefox133", "edge101"):
         for name, url in targets.items():
-            _try(f"{imp:11} plain   {name}", lambda: requests.get(url, headers=HEADERS, impersonate=imp, timeout=30))
+            _try(f"{imp:11} plain   {name}", lambda: requests.get(url, headers=HEADERS, impersonate=imp, timeout=30, proxy=proxy))
         # Warm a session on an HTML page first so bot-manager cookies are set, then call the API.
         try:
-            s = requests.Session(impersonate=imp)
+            s = requests.Session(impersonate=imp, proxy=proxy)
             s.get("https://www.tesla.com/inventory/new/my", timeout=30)
             _try(f"{imp:11} session api_v4", lambda: s.get(api, headers={"Accept": "application/json", "Referer": targets["inventory_page"]}, timeout=30))
         except Exception as exc:

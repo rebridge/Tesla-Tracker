@@ -7,6 +7,7 @@ often; urllib is the fallback so the package still imports without it.
 
 from __future__ import annotations
 
+import os
 import time
 import urllib.error
 import urllib.request
@@ -45,9 +46,12 @@ def fetch_text(url: str, *, retries: int = 2, timeout: int = 30) -> str:
 
 
 def _fetch_once(url: str, timeout: int) -> str:
+    # Optional: route Tesla requests through your own proxy (e.g. a home machine),
+    # since Tesla blocks cloud IP ranges such as GitHub-hosted runners.
+    proxy = os.environ.get("TESLA_PROXY") or None
     if cffi_requests is not None:
         try:
-            resp = cffi_requests.get(url, headers=HEADERS, timeout=timeout, impersonate="chrome")
+            resp = cffi_requests.get(url, headers=HEADERS, timeout=timeout, impersonate="chrome", proxy=proxy)
         except Exception as exc:  # curl_cffi raises its own error hierarchy
             raise FetchError(str(exc)) from exc
         if resp.status_code != 200:
@@ -55,8 +59,11 @@ def _fetch_once(url: str, timeout: int) -> str:
         return resp.text
 
     req = urllib.request.Request(url, headers=HEADERS)
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({"http": proxy, "https": proxy} if proxy else None)
+    )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with opener.open(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as exc:
         raise FetchError(f"HTTP {exc.code}") from exc

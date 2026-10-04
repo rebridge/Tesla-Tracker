@@ -35,6 +35,21 @@ GitHub emails new issues to repo watchers, so watching the repo gets you notifie
 3. **Set your location** in `config.toml` (`zip`, `region`, `lat`, `lng`). The default is Raleigh, NC.
 4. Optionally run it now: Actions → *Monitor Tesla deals* → Run workflow.
 
+## Running where Tesla allows it
+
+**Tesla blocks GitHub's cloud runners.** Every request from a GitHub-hosted runner, even to the tesla.com homepage, gets `HTTP 403 Access Denied`. You can confirm this with the *Diagnose Tesla access* workflow. The monitoring code is fine; it just needs to run from a normal network. Pick one:
+
+**Option A: self-hosted runner (recommended).** Run the job on any always-on Mac, Linux box, or Windows/WSL machine on a home network.
+1. Settings → Actions → Runners → **New self-hosted runner**, and follow the install commands on that machine. Run it as a service so it survives reboots.
+2. Settings → Secrets and variables → Actions → **Variables** → New variable: `MONITOR_RUNNER` = `self-hosted`.
+3. Actions → *Diagnose Tesla access* → Run workflow. You should see `200` for `api_v4`.
+
+Only the Tesla-facing jobs use this runner, and they run on schedule, manual dispatch, or pushes to `main`, never on pull requests. Strangers can't run code on your machine by opening a PR against this public repo. The Pages deploy and tests still run on GitHub's runners.
+
+**Option B: your own proxy.** If you already run an HTTP(S) proxy on a home network, add it as the repository **secret** `TESLA_PROXY` (e.g. `http://user:pass@host:port`). Tesla requests go through it; everything else runs on GitHub as usual.
+
+Until one of these is set up, each run records the failure. After 3 failures in a row, a *monitor-health* issue opens.
+
 ## Configuration
 
 | File | What it controls |
@@ -48,7 +63,7 @@ Trackers are independent. To watch used cars, uncomment the `my-premium-used` bl
 
 ## Limitations
 
-- Tesla's inventory API is undocumented and protected against bots. The fetcher imitates a Chrome browser's TLS handshake (`curl_cffi`), but Tesla may still block GitHub's runners. After 3 failed runs in a row, a **monitor-health** issue opens; it closes itself once a run succeeds. The dashboard shows a warning in the meantime.
+- Tesla's inventory API is undocumented and could change without notice. If it changes or access fails, a **monitor-health** issue opens and closes itself once a run succeeds. If the API responds but no trims match, the dashboard lists the trim names it saw so you can fix `trim_include`.
 - APR detection reads Tesla's marketing text. It only accepts a rate whose own sentence names the tracked trim, and it quotes that sentence in alerts so you can check it. When it finds nothing, the deal uses `fallback_apr` or any APR entered in `offers.toml`.
 - Promo APRs often require a minimum down payment or credit tier. The scenario in `config.toml` doesn't check whether you'd qualify.
 
@@ -59,4 +74,5 @@ pip install -r requirements.txt -r requirements-dev.txt
 python -m pytest -q
 python -m tracker run --dry-run   # prints alerts instead of opening issues
 python -m tracker site            # builds ./site; serve with: python -m http.server -d site
+python -m tracker.probe           # which tesla.com requests succeed from this network
 ```
