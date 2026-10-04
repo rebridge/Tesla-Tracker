@@ -1,0 +1,37 @@
+# Manually entered incentives.
+#
+# The monitor reads prices straight from Tesla's inventory and tries to read the
+# advertised APR from tesla.com. Anything it can't see (a new APR promo, a cash
+# discount, free Supercharging, an FSD transfer) can be entered here. Entries apply
+# only between `start` and `end` (inclusive, YYYY-MM-DD; either may be omitted).
+#
+# Fields:
+#   tracker   tracker id from config.toml
+#   variants  which variants it applies to (default: all)
+#   kind      "apr"      -> rate (percent) and max_term_months
+#             "cash"     -> amount (USD off the price)
+#             "perk"     -> value (USD you'd assign to it; counts toward the deal, isn't financed)
+#   label     short description shown in alerts and on the dashboard
+#   source    where you saw it (URL or note)
+#
+# An active "apr" entry here takes precedence over the auto-detected rate.
+
+# Example (inactive: the promotion it describes ended 2026-09-30):
+[[offers]]
+tracker = "my-premium-new"
+variants = ["RWD", "AWD"]
+kind = "apr"
+rate = 1.99
+max_term_months = 72
+label = "1.99% APR up to 72 months"
+start = "2026-09-01"
+end = "2026-09-30"
+source = "https://www.carsdirect.com/deals-articles/2026-tesla-model-y-adds-1-99-apr-deal-a-new-low"
+
+# [[offers]]
+# tracker = "my-premium-new"
+# kind = "perk"
+# value = 1000
+# label = "3 months free Supercharging"
+# end = "2026-12-31"
+# source = "https://www.tesla.com/modely"

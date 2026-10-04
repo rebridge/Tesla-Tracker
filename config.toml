@@ -1,0 +1,60 @@
+# Tesla deal monitor configuration.
+# Edit this file (the GitHub web editor works fine) to change what is tracked.
+
+[location]
+# Tesla prices inventory, delivery, and fees by location. Set these to your own.
+zip = "27601"
+region = "NC"          # two-letter state
+lat = 35.7796
+lng = -78.6382
+
+[financing]
+# The standard financing scenario used to compare offers.
+down_payment = 7500
+term_months = 72
+# APR used when no promotional rate is known for a trim (Tesla's typical standard rate).
+fallback_apr = 6.49
+
+[fees]
+# Used only when Tesla's inventory data does not include the fee itself.
+destination = 1390
+order_fee = 250
+
+[alerts]
+# Open an alert when the effective deal improves by at least this much since the last alert.
+min_savings_usd = 500
+# Which number "the deal" means: "financed_total" (down payment + all monthly payments
+# - perk value, which captures price AND APR changes) or "cash_price".
+metric = "financed_total"
+# Open a "monitor health" issue after this many consecutive failed runs.
+health_failure_threshold = 3
+
+# ---------------------------------------------------------------------------
+# Trackers. Each one is an independent search with its own history and alerts.
+# Add a [[trackers]] block to watch something else (e.g. used inventory below).
+# ---------------------------------------------------------------------------
+
+[[trackers]]
+id = "my-premium-new"
+name = "Model Y Premium (new)"
+model = "my"
+condition = "new"
+# A vehicle matches when its TrimName contains any include term and no exclude term.
+trim_include = ["Premium"]
+trim_exclude = ["Performance", "Standard"]
+# Offers are tracked per variant; the variant is detected from TrimName/DRIVE.
+variants = ["RWD", "AWD"]
+max_pages = 20
+
+# Future: used inventory. Uncomment to enable; offers.toml can hold used-car APRs too.
+# [[trackers]]
+# id = "my-premium-used"
+# name = "Model Y Premium (used)"
+# model = "my"
+# condition = "used"
+# trim_include = ["Premium", "Long Range"]
+# trim_exclude = ["Performance"]
+# variants = ["RWD", "AWD"]
+# max_odometer = 30000
+# min_year = 2024
+# max_pages = 20

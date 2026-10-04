@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesla Deal Monitor</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface-1: #fcfcfb;
+  --border: #e3e2de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #77766f;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --good: #1b7f3b;
+  --warn-bg: #fff4d6;
+  --warn-text: #6b4a00;
+  --link: #1c5cab;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface-1: #1a1a19;
+    --border: #2f2f2c;
+    --grid: #2a2a27;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #96958c;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --good: #5cc27f;
+    --warn-bg: #3a2f10;
+    --warn-text: #f3d68a;
+    --link: #86b6ef;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111110;
+  --surface-1: #1a1a19;
+  --border: #2f2f2c;
+  --grid: #2a2a27;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #96958c;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --good: #5cc27f;
+  --warn-bg: #3a2f10;
+  --warn-text: #f3d68a;
+  --link: #86b6ef;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text-primary);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--link); }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.01em; }
+.meta { color: var(--text-secondary); font-size: 13px; }
+section { margin-top: 28px; }
+h2 { font-size: 18px; margin: 0 0 12px; }
+h3 { font-size: 14px; margin: 0 0 8px; color: var(--text-secondary); font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0; }
+.card .variant { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.hero { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+.hero-label { color: var(--text-secondary); font-size: 13px; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0 0; font-size: 13px; }
+dt { color: var(--text-secondary); }
+dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.note { font-size: 12px; color: var(--text-muted); margin-top: 10px; overflow-wrap: anywhere; }
+.warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.toolbar button {
+  font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
+}
+.toolbar button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+.chart-wrap { position: relative; background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); margin: 0 0 6px 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+svg text { fill: var(--text-muted); font-size: 11px; }
+.tooltip {
+  position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  display: none; white-space: nowrap; color: var(--text-primary);
+}
+.tooltip .row { display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-secondary); font-weight: 600; }
+td.num, th.num { text-align: right; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+.alerts li { margin-bottom: 10px; }
+.alerts .save { color: var(--good); font-weight: 600; }
+.empty { color: var(--text-muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Tesla Deal Monitor</h1>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+  <div id="trackers"></div>
+  <section>
+    <h2>Recent alerts</h2>
+    <ul class="alerts" id="alerts"></ul>
+  </section>
+</main>
+<div class="tooltip" id="tooltip"></div>
+<script>
+const fmt = n => n == null ? "—" : "$" + Math.round(n).toLocaleString("en-US");
+const fmtDate = s => new Date(s).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const SERIES = { RWD: "var(--series-1)", AWD: "var(--series-2)" };
+const color = (v, i) => SERIES[v] || ["var(--series-1)", "var(--series-2)"][i % 2];
+const METRICS = {
+  financed_total: { label: "Financed total", hint: "Down payment + all payments − perks" },
+  cash_price: { label: "Cash price", hint: "Vehicle + fees − incentives − perks, pre-tax" },
+  monthly_payment: { label: "Monthly payment", hint: "Standard financing scenario" },
+  vehicle_price: { label: "Vehicle price", hint: "Cheapest matching car after Tesla discount" },
+};
+
+async function getJSON(path, fallback) {
+  try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? r.json() : fallback; }
+  catch { return fallback; }
+}
+
+async function load() {
+  const [index, run, alerts] = await Promise.all([
+    getJSON("data/index.json", { trackers: [] }), getJSON("data/run.json", {}), getJSON("data/alerts.json", []),
+  ]);
+  const fin = index.financing || {};
+  document.getElementById("meta").innerHTML =
+    (run.checked_at ? `Last checked ${esc(fmtDate(run.checked_at))}` : "Not checked yet") +
+    (run.run_url ? ` · <a href="${esc(run.run_url)}">workflow run</a>` : "") +
+    (fin.term_months ? ` · Financing scenario: ${fmt(fin.down_payment)} down, ${fin.term_months} months` : "") +
+    (index.alerts ? ` · Alerts at ≥ ${fmt(index.alerts.min_savings_usd)} improvement in ${esc((METRICS[index.alerts.metric] || {}).label || index.alerts.metric).toLowerCase()}` : "");
+
+  const root = document.getElementById("trackers");
+  for (const t of index.trackers) {
+    const [latest, history] = await Promise.all([
+      getJSON(`data/latest/${t.id}.json`, null), getJSON(`data/history/${t.id}.json`, []),
+    ]);
+    root.appendChild(renderTracker(t, latest, history, run.trackers?.[t.id], index.alerts?.metric || "financed_total"));
+  }
+
+  const list = document.getElementById("alerts");
+  const recent = alerts.slice(-15).reverse();
+  list.innerHTML = recent.length ? recent.map(a => `
+    <li><strong>${esc(a.title)}</strong> <span class="meta">${esc(fmtDate(a.at))}</span>
+      ${a.url ? ` · <a href="${esc(a.url)}">issue</a>` : ""}
+      <div class="meta">${(a.changes || []).map(esc).join(" · ")}</div></li>`).join("")
+    : `<li class="empty">No alerts yet. The first run records a baseline; alerts fire when the deal improves from there.</li>`;
+}
+
+function renderTracker(t, latest, history, runInfo, metric) {
+  const sec = document.createElement("section");
+  sec.innerHTML = `<h2>${esc(t.name)}</h2>`;
+  if (runInfo?.error) sec.innerHTML += `<div class="warn">Latest check failed: ${esc(runInfo.error)}. Showing the last good data.</div>`;
+  if (!latest) { sec.innerHTML += `<p class="empty">No data yet.</p>`; return sec; }
+  for (const w of latest.warnings || []) sec.innerHTML += `<div class="warn">${esc(w)}</div>`;
+
+  const variants = (latest.tracker?.variants || Object.keys(latest.offers)).filter(v => latest.offers[v]);
+  const cards = document.createElement("div");
+  cards.className = "cards";
+  variants.forEach((v, i) => cards.appendChild(renderCard(latest.offers[v], color(v, i), metric)));
+  sec.appendChild(cards);
+
+  const chartSec = document.createElement("div");
+  chartSec.style.marginTop = "16px";
+  sec.appendChild(chartSec);
+  renderChart(chartSec, history, variants, metric);
+
+  const veh = document.createElement("details");
+  const rows = variants.flatMap(v => (latest.vehicles[v] || []).slice(0, 10));
+  veh.innerHTML = `<summary>Cheapest matching vehicles (${rows.length})</summary>
+    <div class="table-wrap"><table><thead><tr><th>Variant</th><th>Year</th><th>Paint / wheels</th><th>Location</th>
+    <th class="num">List</th><th class="num">Discount</th><th class="num">Price</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.variant)}</td><td>${esc(r.year)}</td><td>${esc(r.paint)} / ${esc(r.wheels)}</td>
+      <td>${esc(r.location)}</td><td class="num">${fmt(r.list_price)}</td><td class="num">${r.discount ? fmt(r.discount) : "—"}</td>
+      <td class="num">${fmt(r.price)}</td><td><a href="${esc(r.url)}">view</a></td></tr>`).join("")}
+    </tbody></table></div>`;
+  sec.appendChild(veh);
+  return sec;
+}
+
+function renderCard(o, swatch, metric) {
+  const el = document.createElement("div");
+  el.className = "card";
+  const head = `<div class="variant"><span class="swatch" style="background:${swatch}"></span>${esc(o.variant)}</div>`;
+  if (!o.available) { el.innerHTML = head + `<p class="empty">None in inventory right now.</p>`; return el; }
+  const perks = (o.perks || []).map(p => `${p.label} (${fmt(p.value)})`);
+  const cash = (o.cash_incentives || []).map(p => `${p.label} (${fmt(p.amount)})`);
+  el.innerHTML = head + `
+    <div class="hero">${fmt(o.metrics[metric])}</div>
+    <div class="hero-label">${esc(METRICS[metric].label)} · ${esc(METRICS[metric].hint)}</div>
+    <dl>
+      <dt>Vehicle price</dt><dd>${fmt(o.vehicle_price)}${o.inventory_discount ? ` <span class="meta">(${fmt(o.inventory_discount)} off)</span>` : ""}</dd>
+      <dt>Destination + order fee</dt><dd>${fmt(o.destination_fee + o.order_fee)}</dd>
+      <dt>Cash price</dt><dd>${fmt(o.metrics.cash_price)}</dd>
+      <dt>APR / term</dt><dd>${o.apr.rate}% / ${o.term_months} mo</dd>
+      <dt>Monthly payment</dt><dd>${fmt(o.monthly_payment)}</dd>
+      <dt>Total interest</dt><dd>${fmt(o.total_interest)}</dd>
+      <dt>Financed total</dt><dd>${fmt(o.metrics.financed_total)}</dd>
+      <dt>In inventory</dt><dd>${o.inventory_count}</dd>
+    </dl>
+    <div class="note">APR source: ${esc(o.apr.source)} — ${esc(o.apr.label)}</div>
+    ${cash.length ? `<div class="note">Cash incentives: ${esc(cash.join(", "))}</div>` : ""}
+    ${perks.length ? `<div class="note">Perks: ${esc(perks.join(", "))}</div>` : ""}
+    <div class="note">Cheapest: ${esc(o.vehicle.year)} ${esc(o.vehicle.trim)}, ${esc(o.vehicle.paint)}, ${esc(o.vehicle.location || "")}
+      · <a href="${esc(o.vehicle.url)}">view on tesla.com</a></div>`;
+  return el;
+}
+
+function renderChart(container, history, variants, initialMetric) {
+  let metric = initialMetric;
+  container.innerHTML = `<h3>History</h3><div class="toolbar"></div><div class="chart-wrap"><div class="legend"></div><div class="plot"></div></div>
+    <details><summary>Data table</summary><div class="table-wrap tbl"></div></details>`;
+  const toolbar = container.querySelector(".toolbar");
+  for (const [key, m] of Object.entries(METRICS)) {
+    const b = document.createElement("button");
+    b.textContent = m.label;
+    b.setAttribute("aria-pressed", key === metric);
+    b.onclick = () => { metric = key; toolbar.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw(); };
+    toolbar.appendChild(b);
+  }
+  container.querySelector(".legend").innerHTML = variants.map((v, i) =>
+    `<span><span class="swatch" style="background:${color(v, i)}"></span>${esc(v)}</span>`).join("");
+
+  function draw() {
+    const plot = container.querySelector(".plot");
+    const pts = history.map(h => ({ t: new Date(h.date).getTime(), date: h.date, vals: Object.fromEntries(
+      variants.map(v => [v, h.variants[v]?.available ? h.variants[v][metric] : null])) }));
+    container.querySelector(".tbl").innerHTML = `<table><thead><tr><th>Date</th>${variants.map(v => `<th class="num">${esc(v)}</th>`).join("")}</tr></thead>
+      <tbody>${pts.slice().reverse().map(p => `<tr><td>${esc(fmtDate(p.date))}</td>${variants.map(v => `<td class="num">${fmt(p.vals[v])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    const all = pts.flatMap(p => variants.map(v => p.vals[v])).filter(x => x != null);
+    if (pts.length < 2 || !all.length) {
+      plot.innerHTML = `<p class="empty" style="padding:24px 8px">History appears after a couple of checks.</p>`;
+      return;
+    }
+    if (!plot.clientWidth) { requestAnimationFrame(draw); return; }  // not laid out yet
+    const W = Math.max(plot.clientWidth, 280), H = 240, m = { l: 64, r: 12, t: 8, b: 24 };
+    const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    let lo = Math.min(...all), hi = Math.max(...all);
+    const pad = Math.max((hi - lo) * 0.15, hi * 0.01, 50); lo -= pad; hi += pad;
+    const raw = (hi - lo) / 4, mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(s => s >= raw);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = t => m.l + (t - t0) / (t1 - t0 || 1) * (W - m.l - m.r);
+    const y = val => m.t + (1 - (val - lo) / (hi - lo)) * (H - m.t - m.b);
+    const grid = [];
+    for (let val = lo; val <= hi + step / 2; val += step) {
+      grid.push(`<line x1="${m.l}" x2="${W - m.r}" y1="${y(val)}" y2="${y(val)}" stroke="var(--grid)" />
+        <text x="${m.l - 8}" y="${y(val) + 4}" text-anchor="end">${fmt(val)}</text>`);
+    }
+    const xl = [pts[0], pts[pts.length - 1]].map((p, i) =>
+      `<text x="${x(p.t)}" y="${H - 6}" text-anchor="${i ? "end" : "start"}">${esc(new Date(p.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</text>`);
+    const lines = variants.map((v, i) => {
+      // Step line: a price holds until the next observation changes it.
+      let d = "", prev = null;
+      for (const p of pts) {
+        const val = p.vals[v];
+        if (val == null) { prev = null; continue; }
+        d += prev == null ? `M${x(p.t)},${y(val)}` : `H${x(p.t)}V${y(val)}`;
+        prev = val;
+      }
+      return `<path d="${d}" fill="none" stroke="${color(v, i)}" stroke-width="2" stroke-linejoin="round" />`;
+    });
+    plot.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="${esc(METRICS[metric].label)} over time">
+      ${grid.join("")}${xl.join("")}${lines.join("")}<line class="cross" y1="${m.t}" y2="${H - m.b}" stroke="var(--text-muted)" stroke-dasharray="3 3" visibility="hidden" />
+      <g class="dots"></g><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent" /></svg>`;
+    const svg = plot.querySelector("svg"), cross = svg.querySelector(".cross"), dots = svg.querySelector(".dots");
+    const tip = document.getElementById("tooltip");
+    svg.querySelector("rect").addEventListener("pointermove", ev => {
+      const bx = svg.getBoundingClientRect(), px = ev.clientX - bx.left;
+      const p = pts.reduce((a, b) => Math.abs(x(b.t) - px) < Math.abs(x(a.t) - px) ? b : a);
+      cross.setAttribute("x1", x(p.t)); cross.setAttribute("x2", x(p.t)); cross.setAttribute("visibility", "visible");
+      dots.innerHTML = variants.map((v, i) => p.vals[v] == null ? "" :
+        `<circle cx="${x(p.t)}" cy="${y(p.vals[v])}" r="4.5" fill="${color(v, i)}" stroke="var(--surface-1)" stroke-width="2" />`).join("");
+      tip.innerHTML = `<div class="meta">${esc(fmtDate(p.date))}</div>` + variants.map((v, i) =>
+        `<div class="row"><span class="swatch" style="background:${color(v, i)}"></span>${esc(v)} <strong>${fmt(p.vals[v])}</strong></div>`).join("");
+      tip.style.display = "block";
+      const left = Math.min(ev.pageX + 14, window.scrollX + document.documentElement.clientWidth - tip.offsetWidth - 8);
+      tip.style.left = left + "px"; tip.style.top = (ev.pageY - 10 - tip.offsetHeight) + "px";
+    });
+    svg.querySelector("rect").addEventListener("pointerleave", () => {
+      tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); dots.innerHTML = "";
+    });
+  }
+  draw();
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(draw, 150); });
+}
+
+load();
+</script>
+</body>
+</html>
