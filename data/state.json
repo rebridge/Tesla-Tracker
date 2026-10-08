@@ -2,8 +2,8 @@
   "trackers": {
     "my-premium-new": {
       "health": {
-        "failures": 15,
-        "last_error": "2026-10-08T06:17:00+00:00 inventory: https://www.tesla.com/inventory/api/v4/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22my%22%2C%22condition: HTTP 403"
+        "failures": 16,
+        "last_error": "2026-10-08T15:42:14+00:00 inventory: https://www.tesla.com/inventory/api/v4/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22my%22%2C%22condition: HTTP 403"
       },
       "variants": {}
     }
